@@ -78,7 +78,11 @@ describe("vehicle helpers", () => {
     expect(vehiclesData.vehicles[0]).toHaveProperty("price");
     expect(santaFe).toMatchObject({ price: 3381, displacement: 2497, tankCapacity: 67 });
     expect(ioniq5).toMatchObject({ price: 4695, batteryCapacity: 72.6 });
-    expect(ray).toMatchObject({ price: 1460, displacement: 998 });
+    expect(ray).toMatchObject({ price: 1460, displacement: 998, tankCapacity: 35 });
+    const morning = vehiclesData.vehicles.find(
+      (vehicle) => vehicle.manufacturer === "기아" && vehicle.model === "모닝" && vehicle.powertrain.includes("1.0 가솔린")
+    );
+    expect(morning).toMatchObject({ price: 1225, displacement: 998, tankCapacity: 32 });
     expect(gv80).toMatchObject({ price: 6523, displacement: 2497 });
   });
 });

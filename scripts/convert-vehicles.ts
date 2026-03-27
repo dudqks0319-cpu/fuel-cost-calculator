@@ -3,11 +3,77 @@ import path from "node:path";
 import type { FuelType, VehicleRecord } from "../types/vehicle";
 
 type CsvRow = Record<string, string>;
+type VehicleMetadataPatch = Partial<VehicleRecord & { displacement: number; tankCapacity: number; batteryCapacity: number }>;
 
 const inputPath = path.resolve(process.cwd(), "scripts/raw-vehicles.csv");
 const outputPath = path.resolve(process.cwd(), "data/vehicles.json");
 const currentYear = 2026;
 const minYear = currentYear - 5;
+
+const modelDefaults: Array<{
+  manufacturer: string;
+  model: string;
+  price: number;
+  displacement?: number;
+}> = [
+  { manufacturer: "현대", model: "캐스퍼", price: 1460, displacement: 998 },
+  { manufacturer: "현대", model: "아반떼", price: 2015, displacement: 1598 },
+  { manufacturer: "현대", model: "쏘나타", price: 2794, displacement: 1999 },
+  { manufacturer: "현대", model: "그랜저", price: 3928, displacement: 2497 },
+  { manufacturer: "현대", model: "투싼", price: 3098, displacement: 1997 },
+  { manufacturer: "현대", model: "싼타페", price: 3381, displacement: 2497 },
+  { manufacturer: "현대", model: "팰리세이드", price: 4130, displacement: 3470 },
+  { manufacturer: "현대", model: "스타리아 라운지", price: 3616, displacement: 2199 },
+  { manufacturer: "현대", model: "아이오닉5", price: 4695 },
+  { manufacturer: "현대", model: "아이오닉6", price: 4695 },
+  { manufacturer: "현대", model: "아이오닉9", price: 6600 },
+  { manufacturer: "기아", model: "모닝", price: 1225, displacement: 998 },
+  { manufacturer: "기아", model: "레이", price: 1460, displacement: 998 },
+  { manufacturer: "기아", model: "K5", price: 2535, displacement: 1999 },
+  { manufacturer: "기아", model: "스포티지", price: 2734, displacement: 1598 },
+  { manufacturer: "기아", model: "쏘렌토", price: 3386, displacement: 2497 },
+  { manufacturer: "기아", model: "카니발", price: 3523, displacement: 2199 },
+  { manufacturer: "기아", model: "EV3", price: 4292 },
+  { manufacturer: "기아", model: "EV6", price: 4870 },
+  { manufacturer: "기아", model: "EV9", price: 7390 },
+  { manufacturer: "제네시스", model: "GV80", price: 6523, displacement: 2497 },
+  { manufacturer: "제네시스", model: "G80", price: 6028, displacement: 2497 }
+];
+
+const exactOverrides: Array<{
+  manufacturer: string;
+  model: string;
+  matcher: (powertrain: string) => boolean;
+  patch: VehicleMetadataPatch;
+}> = [
+  { manufacturer: "현대", model: "캐스퍼", matcher: (p) => p.includes("1.0 가솔린"), patch: { tankCapacity: 32 } },
+  { manufacturer: "현대", model: "아반떼", matcher: (p) => p.includes("1.6 가솔린"), patch: { tankCapacity: 50 } },
+  { manufacturer: "현대", model: "아반떼", matcher: (p) => p.includes("하이브리드"), patch: { price: 2560, displacement: 1598, tankCapacity: 42 } },
+  { manufacturer: "현대", model: "쏘나타", matcher: (p) => p.includes("2.0 가솔린"), patch: { tankCapacity: 60 } },
+  { manufacturer: "현대", model: "쏘나타", matcher: (p) => p.includes("하이브리드"), patch: { price: 3367, displacement: 1598, tankCapacity: 50 } },
+  { manufacturer: "현대", model: "그랜저", matcher: (p) => p.includes("2.5"), patch: { tankCapacity: 70 } },
+  { manufacturer: "현대", model: "그랜저", matcher: (p) => p.includes("하이브리드"), patch: { price: 4461, displacement: 1598, tankCapacity: 55 } },
+  { manufacturer: "현대", model: "투싼", matcher: (p) => p.includes("2.0 디젤"), patch: { tankCapacity: 54 } },
+  { manufacturer: "현대", model: "투싼", matcher: (p) => p.includes("하이브리드"), patch: { price: 3368, displacement: 1598, tankCapacity: 52 } },
+  { manufacturer: "현대", model: "싼타페", matcher: (p) => p.includes("2.5"), patch: { tankCapacity: 67 } },
+  { manufacturer: "현대", model: "싼타페", matcher: (p) => p.includes("하이브리드"), patch: { price: 3781, displacement: 1598, tankCapacity: 67 } },
+  { manufacturer: "현대", model: "팰리세이드", matcher: (p) => p.includes("3.8") || p.includes("3.5"), patch: { tankCapacity: 71 } },
+  { manufacturer: "현대", model: "스타리아 라운지", matcher: (p) => p.includes("2.2"), patch: { tankCapacity: 75 } },
+  { manufacturer: "현대", model: "아이오닉5", matcher: (p) => p.includes("2WD") || p.includes("롱레인지"), patch: { batteryCapacity: 72.6 } },
+  { manufacturer: "현대", model: "아이오닉6", matcher: (p) => p.includes("2WD") || p.includes("롱레인지"), patch: { batteryCapacity: 72.6 } },
+  { manufacturer: "현대", model: "아이오닉9", matcher: (p) => p.includes("2WD") || p.includes("롱레인지"), patch: { batteryCapacity: 110 } },
+  { manufacturer: "기아", model: "모닝", matcher: (p) => p.includes("1.0 가솔린"), patch: { tankCapacity: 32 } },
+  { manufacturer: "기아", model: "레이", matcher: (p) => p.includes("1.0"), patch: { tankCapacity: 35 } },
+  { manufacturer: "기아", model: "K5", matcher: (p) => p.includes("하이브리드"), patch: { price: 3060, displacement: 1598, tankCapacity: 50 } },
+  { manufacturer: "기아", model: "스포티지", matcher: (p) => p.includes("하이브리드"), patch: { price: 3284, displacement: 1598, tankCapacity: 52 } },
+  { manufacturer: "기아", model: "쏘렌토", matcher: (p) => p.includes("하이브리드"), patch: { price: 3786, displacement: 1598, tankCapacity: 67 } },
+  { manufacturer: "기아", model: "카니발", matcher: (p) => p.includes("2.2"), patch: { tankCapacity: 72 } },
+  { manufacturer: "기아", model: "EV3", matcher: (p) => p.includes("2WD") || p.includes("일반형"), patch: { batteryCapacity: 58.3 } },
+  { manufacturer: "기아", model: "EV6", matcher: (p) => p.includes("2WD") || p.includes("롱레인지"), patch: { batteryCapacity: 77.4 } },
+  { manufacturer: "기아", model: "EV9", matcher: (p) => p.includes("2WD") || p.includes("롱레인지"), patch: { batteryCapacity: 99.8 } },
+  { manufacturer: "제네시스", model: "GV80", matcher: (p) => p.includes("2.5"), patch: { tankCapacity: 72 } },
+  { manufacturer: "제네시스", model: "G80", matcher: (p) => p.includes("2.5"), patch: { tankCapacity: 70 } }
+];
 
 function stripBom(content: string) {
   return content.replace(/^\uFEFF/, "");
@@ -354,13 +420,40 @@ function compareVehicles(left: VehicleRecord, right: VehicleRecord) {
   );
 }
 
+function applyMetadataOverrides(vehicles: VehicleRecord[]) {
+  for (const vehicle of vehicles) {
+    const base = modelDefaults.find((candidate) => candidate.manufacturer === vehicle.manufacturer && candidate.model === vehicle.model);
+    if (base) {
+      vehicle.price = base.price;
+      if ("displacement" in vehicle && base.displacement !== undefined) {
+        vehicle.displacement = base.displacement;
+      }
+    }
+
+    const overrides = exactOverrides.filter(
+      (candidate) =>
+        candidate.manufacturer === vehicle.manufacturer &&
+        candidate.model === vehicle.model &&
+        candidate.matcher(String(vehicle.powertrain))
+    );
+
+    for (const override of overrides) {
+      Object.assign(vehicle, override.patch);
+    }
+  }
+
+  return vehicles;
+}
+
 function main() {
   if (!fs.existsSync(inputPath)) {
     throw new Error(`입력 CSV 파일이 없습니다: ${inputPath}`);
   }
 
   const rows = parseCsv(fs.readFileSync(inputPath, "utf8"));
-  const vehicles = dedupeVehicles(rows.map(buildVehicleRecord).filter((vehicle): vehicle is VehicleRecord => Boolean(vehicle))).sort(compareVehicles);
+  const vehicles = applyMetadataOverrides(
+    dedupeVehicles(rows.map(buildVehicleRecord).filter((vehicle): vehicle is VehicleRecord => Boolean(vehicle))).sort(compareVehicles)
+  );
 
   fs.writeFileSync(outputPath, `${JSON.stringify({ vehicles }, null, 2)}\n`, "utf8");
   console.log(`총 ${vehicles.length}대 차량 변환 완료`);
