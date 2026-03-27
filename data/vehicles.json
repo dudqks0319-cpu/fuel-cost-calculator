@@ -1,0 +1,84 @@
+{
+  "vehicles": [
+    {
+      "manufacturer": "현대",
+      "model": "싼타페",
+      "powertrain": "2.5T 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 67,
+      "mpg": { "combined": 10.0, "city": 8.8, "highway": 12.0 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "싼타페",
+      "powertrain": "1.6T 하이브리드",
+      "fuelType": "gasoline",
+      "tankCapacity": 67,
+      "mpg": { "combined": 15.0, "city": 15.7, "highway": 14.2 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "투싼",
+      "powertrain": "2.0 디젤",
+      "fuelType": "diesel",
+      "tankCapacity": 54,
+      "mpg": { "combined": 15.1, "city": 13.6, "highway": 17.4 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "아이오닉5",
+      "powertrain": "롱레인지 2WD",
+      "fuelType": "electric",
+      "batteryCapacity": 72.6,
+      "efficiency": 5.2
+    },
+    {
+      "manufacturer": "현대",
+      "model": "아이오닉6",
+      "powertrain": "롱레인지 2WD",
+      "fuelType": "electric",
+      "batteryCapacity": 72.6,
+      "efficiency": 6.2
+    },
+    {
+      "manufacturer": "기아",
+      "model": "쏘렌토",
+      "powertrain": "2.5T 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 67,
+      "mpg": { "combined": 9.1, "city": 8.0, "highway": 10.8 }
+    },
+    {
+      "manufacturer": "기아",
+      "model": "쏘렌토",
+      "powertrain": "1.6T 하이브리드",
+      "fuelType": "gasoline",
+      "tankCapacity": 67,
+      "mpg": { "combined": 15.3, "city": 16.5, "highway": 13.8 }
+    },
+    {
+      "manufacturer": "기아",
+      "model": "EV6",
+      "powertrain": "롱레인지 2WD",
+      "fuelType": "electric",
+      "batteryCapacity": 77.4,
+      "efficiency": 5.6
+    },
+    {
+      "manufacturer": "기아",
+      "model": "K5",
+      "powertrain": "2.0 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 60,
+      "mpg": { "combined": 12.6, "city": 11.0, "highway": 15.2 }
+    },
+    {
+      "manufacturer": "기아",
+      "model": "K5",
+      "powertrain": "1.6T 하이브리드",
+      "fuelType": "gasoline",
+      "tankCapacity": 50,
+      "mpg": { "combined": 19.4, "city": 20.8, "highway": 17.5 }
+    }
+  ]
+}
