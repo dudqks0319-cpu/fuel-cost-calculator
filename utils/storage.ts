@@ -4,7 +4,8 @@ export const STORAGE_KEYS = {
   fuelPrices: "@fuel-cost-mobile/fuel-prices",
   homeForm: "@fuel-cost-mobile/home-form",
   compareForm: "@fuel-cost-mobile/compare-form",
-  evCompareForm: "@fuel-cost-mobile/ev-compare-form"
+  evCompareForm: "@fuel-cost-mobile/ev-compare-form",
+  purchaseForm: "@fuel-cost-mobile/purchase-form"
 } as const;
 
 export async function loadStoredValue<T>(key: string, fallback: T) {

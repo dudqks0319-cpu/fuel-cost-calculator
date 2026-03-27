@@ -60,4 +60,25 @@ describe("vehicle helpers", () => {
     expect(getSelectedEfficiency(santaFe, "city")).toBeGreaterThan(0);
     expect(getSelectedEfficiency(ionic5, "combined")).toBeGreaterThan(0);
   });
+
+  it("applies default price and displacement fields and enriches popular models", () => {
+    const santaFe = vehiclesData.vehicles.find(
+      (vehicle) => vehicle.manufacturer === "현대" && vehicle.model === "싼타페" && vehicle.powertrain === "2.5T-GDI 가솔린"
+    );
+    const ioniq5 = vehiclesData.vehicles.find(
+      (vehicle) => vehicle.manufacturer === "현대" && vehicle.model === "아이오닉5" && vehicle.powertrain === "2WD"
+    );
+    const ray = vehiclesData.vehicles.find(
+      (vehicle) => vehicle.manufacturer === "기아" && vehicle.model === "레이" && vehicle.powertrain.includes("1.0")
+    );
+    const gv80 = vehiclesData.vehicles.find(
+      (vehicle) => vehicle.manufacturer === "제네시스" && vehicle.model === "GV80" && vehicle.powertrain.includes("2.5")
+    );
+
+    expect(vehiclesData.vehicles[0]).toHaveProperty("price");
+    expect(santaFe).toMatchObject({ price: 3381, displacement: 2497, tankCapacity: 67 });
+    expect(ioniq5).toMatchObject({ price: 4695, batteryCapacity: 72.6 });
+    expect(ray).toMatchObject({ price: 1460, displacement: 998 });
+    expect(gv80).toMatchObject({ price: 6523, displacement: 2497 });
+  });
 });

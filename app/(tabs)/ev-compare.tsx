@@ -17,12 +17,12 @@ import {
 import {
   CHARGE_PRESETS,
   DEFAULT_EV_PRICE_DIFF_MANWON,
-  DEFAULT_FUEL_PRICES,
   DEFAULT_YEARLY_KM,
   YEARLY_KM_RANGE,
   type ChargePresetKey
 } from "@/utils/defaults";
 import { formatCurrency, formatNumber } from "@/utils/formatter";
+import { useFuelPrices } from "@/utils/FuelPriceContext";
 import { STORAGE_KEYS, loadStoredValue, saveStoredValue } from "@/utils/storage";
 import { getVehicleBySelection } from "@/utils/vehicles";
 import type { ElectricVehicleRecord, FuelVehicleRecord } from "@/types/vehicle";
@@ -108,6 +108,7 @@ function ResultRow({
 }
 
 export default function EvCompareScreen() {
+  const { fuelPrices } = useFuelPrices();
   const [form, setForm] = useState<EvCompareFormState>(defaultForm);
   const [loaded, setLoaded] = useState(false);
 
@@ -155,11 +156,11 @@ export default function EvCompareScreen() {
   const priceDiffWon = (Number.parseInt(form.priceDiffManwon.replace(/[^0-9]/g, ""), 10) || 0) * 10000;
   const fuelEfficiency = fuelVehicle?.mpg.combined ?? 0;
   const evEfficiency = evVehicle?.efficiency ?? 0;
-  const fuelYearlyCost = fuelVehicle ? calcYearlyCost(form.yearlyKm, DEFAULT_FUEL_PRICES[fuelVehicle.fuelType], fuelEfficiency) : 0;
+  const fuelYearlyCost = fuelVehicle ? calcYearlyCost(form.yearlyKm, fuelPrices[fuelVehicle.fuelType], fuelEfficiency) : 0;
   const evYearlyCost = evVehicle ? calcEvYearlyCost(form.yearlyKm, chargePrice, evEfficiency) : 0;
-  const fuelMonthlyCost = fuelVehicle ? calcMonthlyCost(form.yearlyKm / 12, DEFAULT_FUEL_PRICES[fuelVehicle.fuelType], fuelEfficiency) : 0;
+  const fuelMonthlyCost = fuelVehicle ? calcMonthlyCost(form.yearlyKm / 12, fuelPrices[fuelVehicle.fuelType], fuelEfficiency) : 0;
   const evMonthlyCost = evVehicle ? calcEvMonthlyCost(form.yearlyKm / 12, chargePrice, evEfficiency) : 0;
-  const fuelCostPerKm = fuelVehicle ? calcCostPerKm(DEFAULT_FUEL_PRICES[fuelVehicle.fuelType], fuelEfficiency) : 0;
+  const fuelCostPerKm = fuelVehicle ? calcCostPerKm(fuelPrices[fuelVehicle.fuelType], fuelEfficiency) : 0;
   const evCostPerKm = evVehicle ? calcEvCostPerKm(chargePrice, evEfficiency) : 0;
   const yearlySaving = fuelYearlyCost - evYearlyCost;
   const breakEvenMonths = calcBreakEvenMonths(priceDiffWon, yearlySaving);

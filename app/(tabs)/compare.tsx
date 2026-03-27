@@ -6,8 +6,9 @@ import { VehicleSelector, type VehicleSelectionState } from "@/components/Vehicl
 import { AppCard, AppScreen, InlineMessage, InputField, PrimaryButton, SegmentedControl, ActionTextButton } from "@/components/ui";
 import { vehiclesData } from "@/data/vehicles";
 import { calcFuelNeeded, calcMonthlyCost, calcYearlyCost, calcYearlySaving } from "@/utils/calculator";
-import { DEFAULT_FUEL_PRICES, DEFAULT_YEARLY_KM, MILEAGE_TYPE_OPTIONS, YEARLY_KM_RANGE } from "@/utils/defaults";
+import { DEFAULT_YEARLY_KM, MILEAGE_TYPE_OPTIONS, YEARLY_KM_RANGE } from "@/utils/defaults";
 import { formatCurrency, formatLiter, formatNumber } from "@/utils/formatter";
+import { useFuelPrices } from "@/utils/FuelPriceContext";
 import { STORAGE_KEYS, loadStoredValue, saveStoredValue } from "@/utils/storage";
 import { getVehicleBySelection } from "@/utils/vehicles";
 import type { FuelVehicleRecord, MileageType } from "@/types/vehicle";
@@ -73,6 +74,7 @@ function ComparisonRow({
 }
 
 export default function CompareScreen() {
+  const { fuelPrices } = useFuelPrices();
   const [form, setForm] = useState<CompareFormState>(defaultCompareForm);
   const [loaded, setLoaded] = useState(false);
 
@@ -120,11 +122,11 @@ export default function CompareScreen() {
   const mpgB = vehicleB?.mpg[form.mileageType] ?? 0;
   const yearlyFuelA = calcFuelNeeded(form.yearlyKm, mpgA);
   const yearlyFuelB = calcFuelNeeded(form.yearlyKm, mpgB);
-  const yearlyCostA = vehicleA ? calcYearlyCost(form.yearlyKm, DEFAULT_FUEL_PRICES[vehicleA.fuelType], mpgA) : 0;
-  const yearlyCostB = vehicleB ? calcYearlyCost(form.yearlyKm, DEFAULT_FUEL_PRICES[vehicleB.fuelType], mpgB) : 0;
-  const monthlyCostA = vehicleA ? calcMonthlyCost(form.yearlyKm / 12, DEFAULT_FUEL_PRICES[vehicleA.fuelType], mpgA) : 0;
-  const monthlyCostB = vehicleB ? calcMonthlyCost(form.yearlyKm / 12, DEFAULT_FUEL_PRICES[vehicleB.fuelType], mpgB) : 0;
-  const yearlySaving = vehicleA && vehicleB ? calcYearlySaving(form.yearlyKm, vehicleA, vehicleB, DEFAULT_FUEL_PRICES, form.mileageType) : 0;
+  const yearlyCostA = vehicleA ? calcYearlyCost(form.yearlyKm, fuelPrices[vehicleA.fuelType], mpgA) : 0;
+  const yearlyCostB = vehicleB ? calcYearlyCost(form.yearlyKm, fuelPrices[vehicleB.fuelType], mpgB) : 0;
+  const monthlyCostA = vehicleA ? calcMonthlyCost(form.yearlyKm / 12, fuelPrices[vehicleA.fuelType], mpgA) : 0;
+  const monthlyCostB = vehicleB ? calcMonthlyCost(form.yearlyKm / 12, fuelPrices[vehicleB.fuelType], mpgB) : 0;
+  const yearlySaving = vehicleA && vehicleB ? calcYearlySaving(form.yearlyKm, vehicleA, vehicleB, fuelPrices, form.mileageType) : 0;
   const projectionYears = [1, 3, 5, 10];
   const chartData = projectionYears.map((year) => ({
     label: `${year}년`,
@@ -196,7 +198,7 @@ export default function CompareScreen() {
         </View>
         <InputField
           keyboardType="number-pad"
-          label="연간 주행거리 직접 입력"
+          label="연간 주행거리 직접입력"
           onChangeText={(text) =>
             setForm((current) => ({
               ...current,
@@ -245,8 +247,8 @@ export default function CompareScreen() {
               color={yearlySaving >= 0 ? theme.colors.success : theme.colors.danger}
               text={
                 yearlySaving >= 0
-                  ? `차량 B가 연간 ${formatCurrency(yearlySaving)} 절약! 3년이면 ${formatCurrency(yearlySaving * 3)}, 5년이면 ${formatCurrency(yearlySaving * 5)} 차이`
-                  : `차량 B가 연간 ${formatCurrency(Math.abs(yearlySaving))} 더 듭니다. 3년이면 ${formatCurrency(Math.abs(yearlySaving) * 3)} 차이입니다.`
+                  ? `차량 B가 연간 ${formatCurrency(yearlySaving)} 절약! 3년 ${formatCurrency(yearlySaving * 3)}, 5년 ${formatCurrency(yearlySaving * 5)} 차이`
+                  : `차량 B가 연간 ${formatCurrency(Math.abs(yearlySaving))} 더 비쌈. 3년이면 ${formatCurrency(Math.abs(yearlySaving) * 3)} 차이.`
               }
             />
           </>
@@ -272,7 +274,7 @@ export default function CompareScreen() {
           <InlineMessage
             backgroundColor={`${theme.colors.primary}10`}
             color={theme.colors.primary}
-            text="그래프를 보려면 두 차량을 모두 선택해주세요."
+            text="그래프를 보려면 차량을 선택해주세요."
           />
         )}
       </AppCard>
@@ -293,7 +295,7 @@ export default function CompareScreen() {
 
               return (
                 <Text key={year} style={theme.typography.caption}>
-                  {year}년 차이: {formatCurrency(Math.abs(delta))} {delta >= 0 ? "절약" : "추가 지출"}
+                  {year}년 차이: {formatCurrency(Math.abs(delta))} {delta >= 0 ? "절약" : "추가 비용"}
                 </Text>
               );
             })}
@@ -302,7 +304,7 @@ export default function CompareScreen() {
             </Text>
           </View>
         ) : (
-          <Text style={theme.typography.caption}>비교 상세를 열어 1년, 3년, 5년, 10년 차이를 확인할 수 있습니다.</Text>
+          <Text style={theme.typography.caption}>펼치기를 누르면 1, 3, 5, 10년 누적 비용 차이를 볼 수 있습니다.</Text>
         )}
       </AppCard>
 

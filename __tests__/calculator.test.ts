@@ -1,15 +1,20 @@
 import { describe, expect, it } from "vitest";
 import {
+  calcAcquisitionTax,
+  calcAnnualVehicleTax,
   calcBreakEvenMonths,
   calcCostPerKm,
   calcEvCostPerKm,
   calcEvMonthlyCost,
   calcEvRange,
   calcEvYearlyCost,
+  calcEvTripCost,
   calcFuelNeeded,
   calcFullTankCost,
   calcFullTankRange,
+  calcIndividualConsumptionTax,
   calcMonthlyCost,
+  calcTripFuelCost,
   calcYearlyCost,
   calcYearlySaving
 } from "@/utils/calculator";
@@ -38,6 +43,8 @@ describe("calculator", () => {
       model: "싼타페",
       powertrain: "2.5T 가솔린",
       fuelType: "gasoline",
+      price: 3381,
+      displacement: 2497,
       tankCapacity: 67,
       mpg: {
         combined: 10,
@@ -50,6 +57,8 @@ describe("calculator", () => {
       model: "싼타페",
       powertrain: "1.6T 하이브리드",
       fuelType: "gasoline",
+      price: 3781,
+      displacement: 1598,
       tankCapacity: 67,
       mpg: {
         combined: 15,
@@ -62,6 +71,7 @@ describe("calculator", () => {
       model: "아이오닉5",
       powertrain: "롱레인지 2WD",
       fuelType: "electric",
+      price: 4695,
       batteryCapacity: 72.6,
       efficiency: 5.2
     };
@@ -99,5 +109,40 @@ describe("calculator", () => {
     expect(yearlyEvCost).toBe(1000962);
     expect(yearlySaving).toBe(1757538);
     expect(calcBreakEvenMonths(8000000, yearlySaving)).toBe(55);
+  });
+});
+
+describe("tax calculations", () => {
+  it("calculates acquisition tax for normal vehicle", () => {
+    expect(calcAcquisitionTax(3381, 2497, false)).toBe(237);
+  });
+
+  it("calculates acquisition tax for light vehicle", () => {
+    expect(calcAcquisitionTax(1225, 998, false)).toBe(49);
+  });
+
+  it("calculates acquisition tax for EV", () => {
+    expect(calcAcquisitionTax(4695, 0, true)).toBe(189);
+  });
+
+  it("calculates individual consumption tax", () => {
+    const result = calcIndividualConsumptionTax(3381, 0.035, 100);
+    expect(result.consumptionTax).toBe(100);
+    expect(result.educationTax).toBe(30);
+    expect(result.vat).toBe(13);
+    expect(result.totalTax).toBe(143);
+  });
+
+  it("calculates annual vehicle tax", () => {
+    expect(calcAnnualVehicleTax(2497, false)).toBe(649220);
+    expect(calcAnnualVehicleTax(0, true)).toBe(130000);
+  });
+
+  it("calculates trip fuel cost", () => {
+    expect(calcTripFuelCost(400, 1839, 10)).toBe(73560);
+  });
+
+  it("calculates EV trip cost", () => {
+    expect(calcEvTripCost(400, 347, 5.2)).toBe(26692);
   });
 });

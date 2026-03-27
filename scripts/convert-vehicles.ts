@@ -167,7 +167,9 @@ const domesticBaseModels = [
   "레이",
   "모닝",
   "K5",
+  "스포티지",
   "쏘렌토",
+  "카니발",
   "EV6",
   "EV9",
   "EV3",
@@ -285,6 +287,7 @@ function buildVehicleRecord(row: CsvRow): VehicleRecord | null {
   const highway = parseNumber(row["고속도로연비"] ?? row["고속도로_연비"] ?? "");
   const combined = parseNumber(row["복합연비"] ?? row["복합_연비"] ?? "") || Math.round((((city + highway) / 2) || 0) * 10) / 10;
   const year = inferYear(row);
+  const displacement = parseNumber(row["배기량"] ?? row["배기량(cc)"] ?? "");
 
   if (year && year < minYear) {
     return null;
@@ -308,6 +311,7 @@ function buildVehicleRecord(row: CsvRow): VehicleRecord | null {
       model,
       powertrain,
       fuelType: "electric",
+      price: 0,
       batteryCapacity: 0,
       efficiency: combined || city || highway || 0
     };
@@ -318,6 +322,8 @@ function buildVehicleRecord(row: CsvRow): VehicleRecord | null {
     model,
     powertrain,
     fuelType,
+    price: 0,
+    displacement,
     tankCapacity: 0,
     mpg: {
       combined,

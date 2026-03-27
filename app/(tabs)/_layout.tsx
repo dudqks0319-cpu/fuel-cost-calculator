@@ -53,6 +53,13 @@ export default function TabsLayout() {
           tabBarIcon: renderTabIcon("flash-outline", "flash")
         }}
       />
+      <Tabs.Screen
+        name="purchase"
+        options={{
+          title: "구매계산기",
+          tabBarIcon: renderTabIcon("pricetag-outline", "pricetag")
+        }}
+      />
     </Tabs>
   );
 }

@@ -20,6 +20,8 @@ export type FuelVehicleRecord = {
   model: string;
   powertrain: string;
   fuelType: Exclude<FuelType, "electric">;
+  price: number;
+  displacement: number;
   tankCapacity: number;
   mpg: MpgSet;
 };
@@ -29,6 +31,7 @@ export type ElectricVehicleRecord = {
   model: string;
   powertrain: string;
   fuelType: "electric";
+  price: number;
   batteryCapacity: number;
   efficiency: number;
 };
