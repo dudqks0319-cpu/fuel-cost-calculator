@@ -4,7 +4,7 @@ import { Share, Text, View } from "react-native";
 import { CompareChart } from "@/components/CompareChart";
 import { VehicleSelector, type VehicleSelectionState } from "@/components/VehicleSelector";
 import { ActionTextButton, AppCard, AppScreen, InlineMessage, InputField, PrimaryButton, SegmentedControl } from "@/components/ui";
-import vehiclesData from "@/data/vehicles.json";
+import { vehiclesData } from "@/data/vehicles";
 import {
   calcBreakEvenMonths,
   calcCostPerKm,

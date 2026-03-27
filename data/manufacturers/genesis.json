@@ -1,0 +1,92 @@
+{
+  "vehicles": [
+    {
+      "manufacturer": "제네시스",
+      "model": "G70",
+      "powertrain": "2.5 터보 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 60,
+      "mpg": { "combined": 10.2, "city": 8.9, "highway": 12.3 }
+    },
+    {
+      "manufacturer": "제네시스",
+      "model": "G70 슈팅 브레이크",
+      "powertrain": "2.5 터보 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 60,
+      "mpg": { "combined": 10.2, "city": 8.8, "highway": 12.5 }
+    },
+    {
+      "manufacturer": "제네시스",
+      "model": "G80",
+      "powertrain": "2.5 터보 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 65,
+      "mpg": { "combined": 10.8, "city": 9.5, "highway": 12.7 }
+    },
+    {
+      "manufacturer": "제네시스",
+      "model": "Electrified G80",
+      "powertrain": "AWD",
+      "fuelType": "electric",
+      "batteryCapacity": 87.2,
+      "efficiency": 4.3
+    },
+    {
+      "manufacturer": "제네시스",
+      "model": "G90",
+      "powertrain": "3.5 터보 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 73,
+      "mpg": { "combined": 8.9, "city": 7.7, "highway": 10.8 }
+    },
+    {
+      "manufacturer": "제네시스",
+      "model": "G90 Long Wheel Base",
+      "powertrain": "3.5 터보 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 73,
+      "mpg": { "combined": 7.8, "city": 6.9, "highway": 9.2 }
+    },
+    {
+      "manufacturer": "제네시스",
+      "model": "GV60",
+      "powertrain": "스탠다드 AWD",
+      "fuelType": "electric",
+      "batteryCapacity": 77.4,
+      "efficiency": 4.8
+    },
+    {
+      "manufacturer": "제네시스",
+      "model": "GV70",
+      "powertrain": "2.5 터보 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 66,
+      "mpg": { "combined": 10.2, "city": 8.8, "highway": 12.4 }
+    },
+    {
+      "manufacturer": "제네시스",
+      "model": "Electrified GV70",
+      "powertrain": "AWD",
+      "fuelType": "electric",
+      "batteryCapacity": 84.0,
+      "efficiency": 4.5
+    },
+    {
+      "manufacturer": "제네시스",
+      "model": "GV80",
+      "powertrain": "2.5 터보 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 80,
+      "mpg": { "combined": 9.3, "city": 8.2, "highway": 10.9 }
+    },
+    {
+      "manufacturer": "제네시스",
+      "model": "GV80 쿠페",
+      "powertrain": "2.5 터보 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 80,
+      "mpg": { "combined": 8.9, "city": 7.9, "highway": 10.4 }
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "vehicles": [
+    {
+      "manufacturer": "현대",
+      "model": "캐스퍼",
+      "powertrain": "1.0 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 35,
+      "mpg": { "combined": 14.3, "city": 13.1, "highway": 15.7 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "캐스퍼 일렉트릭",
+      "powertrain": "인스퍼레이션",
+      "fuelType": "electric",
+      "batteryCapacity": 49.0,
+      "efficiency": 5.8
+    },
+    {
+      "manufacturer": "현대",
+      "model": "아반떼",
+      "powertrain": "1.6 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 47,
+      "mpg": { "combined": 15.3, "city": 13.8, "highway": 17.4 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "아반떼",
+      "powertrain": "1.6 하이브리드",
+      "fuelType": "gasoline",
+      "tankCapacity": 42,
+      "mpg": { "combined": 21.1, "city": 21.4, "highway": 20.7 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "쏘나타",
+      "powertrain": "2.0 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 60,
+      "mpg": { "combined": 12.6, "city": 11.2, "highway": 14.7 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "쏘나타",
+      "powertrain": "2.0 하이브리드",
+      "fuelType": "gasoline",
+      "tankCapacity": 50,
+      "mpg": { "combined": 19.4, "city": 19.8, "highway": 18.8 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "그랜저",
+      "powertrain": "2.5 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 60,
+      "mpg": { "combined": 11.7, "city": 10.4, "highway": 13.7 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "그랜저",
+      "powertrain": "1.6 터보 하이브리드",
+      "fuelType": "gasoline",
+      "tankCapacity": 50,
+      "mpg": { "combined": 18.0, "city": 18.2, "highway": 17.7 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "베뉴",
+      "powertrain": "1.6 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 45,
+      "mpg": { "combined": 13.7, "city": 12.9, "highway": 14.7 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "코나",
+      "powertrain": "1.6 터보 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 47,
+      "mpg": { "combined": 13.0, "city": 11.6, "highway": 15.0 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "코나",
+      "powertrain": "1.6 하이브리드",
+      "fuelType": "gasoline",
+      "tankCapacity": 38,
+      "mpg": { "combined": 19.8, "city": 20.8, "highway": 18.6 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "코나",
+      "powertrain": "Electric 롱레인지",
+      "fuelType": "electric",
+      "batteryCapacity": 64.8,
+      "efficiency": 5.5
+    },
+    {
+      "manufacturer": "현대",
+      "model": "투싼",
+      "powertrain": "1.6 터보 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 54,
+      "mpg": { "combined": 12.5, "city": 11.0, "highway": 14.7 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "투싼",
+      "powertrain": "2.0 디젤",
+      "fuelType": "diesel",
+      "tankCapacity": 54,
+      "mpg": { "combined": 15.1, "city": 13.6, "highway": 17.4 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "투싼",
+      "powertrain": "1.6 터보 하이브리드",
+      "fuelType": "gasoline",
+      "tankCapacity": 52,
+      "mpg": { "combined": 16.2, "city": 16.9, "highway": 15.4 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "싼타페",
+      "powertrain": "2.5T 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 67,
+      "mpg": { "combined": 10.0, "city": 8.8, "highway": 12.0 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "싼타페",
+      "powertrain": "1.6T 하이브리드",
+      "fuelType": "gasoline",
+      "tankCapacity": 67,
+      "mpg": { "combined": 15.0, "city": 15.7, "highway": 14.2 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "팰리세이드",
+      "powertrain": "2.5 터보 가솔린",
+      "fuelType": "gasoline",
+      "tankCapacity": 71,
+      "mpg": { "combined": 9.7, "city": 8.6, "highway": 11.2 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "스타리아 라운지",
+      "powertrain": "1.6 터보 하이브리드",
+      "fuelType": "gasoline",
+      "tankCapacity": 65,
+      "mpg": { "combined": 13.0, "city": 12.4, "highway": 13.7 }
+    },
+    {
+      "manufacturer": "현대",
+      "model": "아이오닉5",
+      "powertrain": "롱레인지 2WD",
+      "fuelType": "electric",
+      "batteryCapacity": 84.0,
+      "efficiency": 5.2
+    },
+    {
+      "manufacturer": "현대",
+      "model": "아이오닉6",
+      "powertrain": "롱레인지 2WD",
+      "fuelType": "electric",
+      "batteryCapacity": 77.4,
+      "efficiency": 6.2
+    },
+    {
+      "manufacturer": "현대",
+      "model": "아이오닉9",
+      "powertrain": "롱레인지 2WD",
+      "fuelType": "electric",
+      "batteryCapacity": 110.3,
+      "efficiency": 4.3
+    }
+  ]
+}

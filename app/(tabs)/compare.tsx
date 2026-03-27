@@ -4,7 +4,7 @@ import { Share, Text, View } from "react-native";
 import { CompareChart } from "@/components/CompareChart";
 import { VehicleSelector, type VehicleSelectionState } from "@/components/VehicleSelector";
 import { AppCard, AppScreen, InlineMessage, InputField, PrimaryButton, SegmentedControl, ActionTextButton } from "@/components/ui";
-import vehiclesData from "@/data/vehicles.json";
+import { vehiclesData } from "@/data/vehicles";
 import { calcFuelNeeded, calcMonthlyCost, calcYearlyCost, calcYearlySaving } from "@/utils/calculator";
 import { DEFAULT_FUEL_PRICES, DEFAULT_YEARLY_KM, MILEAGE_TYPE_OPTIONS, YEARLY_KM_RANGE } from "@/utils/defaults";
 import { formatCurrency, formatLiter, formatNumber } from "@/utils/formatter";
