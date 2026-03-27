@@ -69,72 +69,222 @@ function parseNumber(value: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function normalizeFuel(rawFuel: string): FuelType | null {
-  if (rawFuel.includes("전기")) {
+function inferYear(row: CsvRow) {
+  const text = row["모델명"] ?? "";
+  const fourDigit = text.match(/\b(20\d{2})\b/);
+  if (fourDigit) {
+    return Number.parseInt(fourDigit[1], 10);
+  }
+
+  const my = text.match(/\b(\d{2})MY\b/i);
+  if (my) {
+    return 2000 + Number.parseInt(my[1], 10);
+  }
+
+  return 0;
+}
+
+function inferFuelType(row: CsvRow): FuelType {
+  const model = `${row["모델명"] ?? ""} ${row["유형"] ?? ""}`;
+  const chargeRange = parseNumber(row["1회충전주행거리"] ?? "");
+
+  if (
+    chargeRange > 0 ||
+    /(전기|Electric|일렉트릭|EV|e-tron|Electrified|아이오닉 ?[569]|GV60)/i.test(model)
+  ) {
     return "electric";
   }
 
-  if (rawFuel.includes("LPG")) {
+  if (/(LPG|LPI)/i.test(model)) {
     return "lpg";
   }
 
-  if (rawFuel.includes("경유")) {
+  if (/(디젤|Diesel|TDI|BlueHDi|dCi|CDI|CRDi)/i.test(model)) {
     return "diesel";
   }
 
-  if (rawFuel.includes("가솔린")) {
+  if (/(하이브리드|HEV|PHEV|Hybrid|e:HEV)/i.test(model)) {
     return "gasoline";
   }
 
-  return null;
-}
-
-function isHybrid(rawFuel: string) {
-  return rawFuel.includes("하이브리드") || rawFuel.includes("+전기");
+  return "gasoline";
 }
 
 function buildPowertrain(row: CsvRow, fuelType: FuelType) {
-  const displacement = parseNumber(row["배기량"] ?? "");
-  const engineLabel = displacement > 0 ? `${(displacement / 1000).toFixed(1).replace(".0", "")}${displacement >= 1400 ? "T" : ""}` : "";
+  const modelName = row["모델명"] ?? "";
+  const engineMatch = modelName.match(/(\d\.\d)\s?(T-GDI|TDI|MPI|GDI|LPI|dCi|CRDi|T?)/i);
+  const engineLabel = engineMatch
+    ? `${engineMatch[1]}${engineMatch[2] ? engineMatch[2].replace(/^T$/i, "T") : ""}`.replace(/\s+/g, "")
+    : "";
 
   if (fuelType === "electric") {
-    if ((row["모델명"] ?? "").includes("롱레인지")) {
+    if (modelName.includes("롱레인지")) {
       return "롱레인지";
     }
 
-    if ((row["모델명"] ?? "").includes("스탠다드")) {
+    if (modelName.includes("스탠다드")) {
       return "스탠다드";
+    }
+
+    if (/(AWD|4WD)/i.test(modelName)) {
+      return "AWD";
+    }
+
+    if (/(2WD|RWD|후륜)/i.test(modelName)) {
+      return "2WD";
     }
 
     return row["유형"] || "전기";
   }
 
-  if (isHybrid(row["연료"] ?? "")) {
+  const fuelLabel = fuelType === "gasoline" ? "가솔린" : fuelType === "diesel" ? "디젤" : "LPG";
+  if (/(하이브리드|HEV|PHEV|Hybrid|e:HEV)/i.test(modelName)) {
     return `${engineLabel || "하이브리드"} 하이브리드`.trim();
   }
 
-  const fuelLabel = fuelType === "gasoline" ? "가솔린" : fuelType === "diesel" ? "디젤" : "LPG";
   return `${engineLabel || fuelLabel} ${fuelLabel}`.trim();
 }
 
+const domesticBaseModels = [
+  "캐스퍼 일렉트릭",
+  "캐스퍼",
+  "아반떼",
+  "쏘나타",
+  "그랜저",
+  "베뉴",
+  "코나",
+  "투싼",
+  "싼타페",
+  "팰리세이드",
+  "스타리아 라운지",
+  "스타리아",
+  "아이오닉 5",
+  "아이오닉5",
+  "아이오닉 6",
+  "아이오닉6",
+  "아이오닉 9",
+  "아이오닉9",
+  "레이",
+  "모닝",
+  "K5",
+  "쏘렌토",
+  "EV6",
+  "EV9",
+  "EV3",
+  "니로",
+  "GV80 쿠페",
+  "Electrified GV70",
+  "Electrified G80",
+  "GV80",
+  "GV70",
+  "GV60",
+  "G90 Long Wheel Base",
+  "G90",
+  "G80",
+  "G70 슈팅 브레이크",
+  "G70"
+];
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function simplifyManufacturer(manufacturer: string, modelName: string) {
+  if (manufacturer === "현대" && /(^|\s)(G70|G80|G90|GV60|GV70|GV80|Electrified)(\s|$)/.test(modelName)) {
+    return "제네시스";
+  }
+
+  if (manufacturer === "GM" || manufacturer === "한국지엠") {
+    return "쉐보레";
+  }
+
+  if (manufacturer === "르노코리아자동차(주)") {
+    return "르노코리아";
+  }
+
+  if (manufacturer === "케이지모빌리티") {
+    return "KGM";
+  }
+
+  return manufacturer;
+}
+
 function simplifyModelName(name: string) {
-  return name
+  const cleaned = name
+    .replace(/\t/g, " ")
+    .replace(/_/g, " ")
     .replace(/\s*\(.*?\)\s*/g, " ")
-    .replace(/\b(2WD|4WD|AWD|FWD)\b/gi, "")
+    .replace(/\b(2WD|4WD|AWD|FWD|RWD)\b/gi, " ")
+    .replace(/\b\d{2}MY\b/gi, " ")
+    .replace(/빌트인캠\s?(없음|미장착|장착)/g, " ")
+    .replace(/\d{1,2}인치/g, " ")
+    .replace(/타이어/g, " ")
+    .replace(/\b(밴형|밴|쿠페|스포츠패키지|블랙라인|롱레인지|스탠다드)\b/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+  if (/G70\s*슈팅\s*브레이크|G70\s*슈팅브레이크/i.test(cleaned)) {
+    return "G70 슈팅 브레이크";
+  }
+
+  if (/스타리아\s*라운지/.test(cleaned)) {
+    return "스타리아 라운지";
+  }
+
+  if (/캐스퍼\s*일렉트릭/.test(cleaned)) {
+    return "캐스퍼 일렉트릭";
+  }
+
+  if (/아이오닉\s*5/.test(cleaned)) {
+    return "아이오닉5";
+  }
+
+  if (/아이오닉\s*6/.test(cleaned)) {
+    return "아이오닉6";
+  }
+
+  if (/아이오닉\s*9/.test(cleaned)) {
+    return "아이오닉9";
+  }
+
+  const matchedBaseModel = [...domesticBaseModels]
+    .sort((left, right) => right.length - left.length)
+    .find((baseModel) => new RegExp(`(^|\\s)${escapeRegExp(baseModel)}(?=\\s|$)`).test(cleaned));
+  if (matchedBaseModel) {
+    return matchedBaseModel.replace(/\s+/g, " ").trim();
+  }
+
+  const cutPoints = [
+    "가솔린",
+    "디젤",
+    "하이브리드",
+    "전기",
+    "Electric",
+    "T-GDI",
+    "MPI",
+    "GDI",
+    "LPI",
+    "HEV",
+    "PHEV"
+  ];
+
+  for (const point of cutPoints) {
+    const index = cleaned.indexOf(point);
+    if (index > 0) {
+      return cleaned.slice(0, index).trim();
+    }
+  }
+
+  return cleaned;
 }
 
 function buildVehicleRecord(row: CsvRow): VehicleRecord | null {
-  const fuelType = normalizeFuel(row["연료"] ?? "");
-  if (!fuelType) {
-    return null;
-  }
+  const fuelType = inferFuelType(row);
 
   const city = parseNumber(row["도심주행연비"] ?? row["도심_연비"] ?? "");
   const highway = parseNumber(row["고속도로연비"] ?? row["고속도로_연비"] ?? "");
   const combined = parseNumber(row["복합연비"] ?? row["복합_연비"] ?? "") || Math.round((((city + highway) / 2) || 0) * 10) / 10;
-  const year = parseNumber(row["출시연도"] ?? "");
+  const year = inferYear(row);
 
   if (year && year < minYear) {
     return null;
@@ -144,7 +294,7 @@ function buildVehicleRecord(row: CsvRow): VehicleRecord | null {
     return null;
   }
 
-  const manufacturer = row["업체명"] || row["제조(수입사)"] || "기타";
+  const manufacturer = simplifyManufacturer(row["업체명"] || row["제조(수입사)"] || "기타", row["모델명"] || "");
   const model = simplifyModelName(row["모델명"] || "");
   const powertrain = buildPowertrain(row, fuelType);
 
@@ -181,7 +331,7 @@ function dedupeVehicles(vehicles: VehicleRecord[]) {
   const seen = new Set<string>();
 
   return vehicles.filter((vehicle) => {
-    const key = `${vehicle.manufacturer}::${vehicle.model}::${vehicle.powertrain}`;
+    const key = `${vehicle.manufacturer}::${vehicle.model}::${vehicle.powertrain}::${vehicle.fuelType}`;
     if (seen.has(key)) {
       return false;
     }
