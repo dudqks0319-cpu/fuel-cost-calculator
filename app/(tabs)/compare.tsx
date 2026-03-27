@@ -245,7 +245,7 @@ export default function CompareScreen() {
               color={yearlySaving >= 0 ? theme.colors.success : theme.colors.danger}
               text={
                 yearlySaving >= 0
-                  ? `차량 B가 연간 ${formatCurrency(yearlySaving)} 절약합니다. 3년이면 ${formatCurrency(yearlySaving * 3)}, 5년이면 ${formatCurrency(yearlySaving * 5)} 차이입니다.`
+                  ? `차량 B가 연간 ${formatCurrency(yearlySaving)} 절약! 3년이면 ${formatCurrency(yearlySaving * 3)}, 5년이면 ${formatCurrency(yearlySaving * 5)} 차이`
                   : `차량 B가 연간 ${formatCurrency(Math.abs(yearlySaving))} 더 듭니다. 3년이면 ${formatCurrency(Math.abs(yearlySaving) * 3)} 차이입니다.`
               }
             />
@@ -254,7 +254,7 @@ export default function CompareScreen() {
           <InlineMessage
             backgroundColor={`${theme.colors.primary}10`}
             color={theme.colors.primary}
-            text="차량 A와 차량 B를 모두 선택해주세요."
+            text="차량 A와 B를 선택해주세요."
           />
         )}
       </AppCard>
@@ -284,7 +284,7 @@ export default function CompareScreen() {
             onPress={() => setForm((current) => ({ ...current, showDetails: !current.showDetails }))}
           />
         }
-        title="상세 비교표"
+        title="상세 비교"
       >
         {form.showDetails && ready ? (
           <View style={{ gap: theme.spacing.xs }}>
