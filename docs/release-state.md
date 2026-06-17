@@ -5,7 +5,7 @@ Updated: 2026-06-17
 ## Local Code State
 
 - Branch: `appstore-free-release`
-- Latest release-prep commit: `0ab955f`
+- Latest release-prep commit: see `git log --oneline -3`
 - App name: 기름값 계산기
 - Version: `1.0.0`
 - iOS bundle ID: `com.jyb1126.fuelcostcalculator`
