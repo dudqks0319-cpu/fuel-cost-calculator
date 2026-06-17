@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "연료비 계산기",
+    "name": "기름값 계산기",
     "slug": "fuel-cost-calculator",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,11 +13,16 @@
       "backgroundColor": "#F2F2F7"
     },
     "ios": {
-      "bundleIdentifier": "com.invitehub.fuelcostmobile.dev",
-      "supportsTablet": false
+      "bundleIdentifier": "com.jyb1126.fuelcostcalculator",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-      "package": "com.invitehub.fuelcostmobile.dev",
+      "package": "com.jyb1126.fuelcostcalculator",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -31,6 +36,12 @@
     ],
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "owner": "jyb1126",
+    "extra": {
+      "eas": {
+        "projectId": "8dad0ba0-7cb4-46e1-ae81-e96f67faf1e3"
+      }
     }
   }
 }

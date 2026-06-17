@@ -33,6 +33,7 @@ yarn-error.*
 # local env files
 .env*.local
 scripts/raw-vehicles.csv
+qa/
 
 # typescript
 *.tsbuildinfo
