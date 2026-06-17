@@ -16,8 +16,8 @@ Updated: 2026-06-17
 
 ## External State
 
-- GitHub Pages privacy URL: pending publish through Actions Pages workflow
-- GitHub Pages support URL: pending publish through Actions Pages workflow
+- GitHub Pages privacy URL: `https://dudqks0319-cpu.github.io/fuel-cost-calculator/privacy.html` returned 200 on 2026-06-17
+- GitHub Pages support URL: `https://dudqks0319-cpu.github.io/fuel-cost-calculator/support.html` returned 200 on 2026-06-17
 - App Store Connect app record: pending account login
 - App Store Connect Apple ID / `ASC_APP_ID`: pending
 - EAS iOS build ID: pending
@@ -33,6 +33,7 @@ Updated: 2026-06-17
 - `npm run lint`: passed with 2 pre-existing style warnings in `scripts/convert-vehicles.ts`
 - `npx expo export --platform web`: passed on 2026-06-17
 - Local static export HTTP check: `http://127.0.0.1:4173` returned 200 and exported HTML title is `기름값 계산기`
+- GitHub Pages workflow run `27697000088`: passed on 2026-06-17
 
 ## Next Action
 
