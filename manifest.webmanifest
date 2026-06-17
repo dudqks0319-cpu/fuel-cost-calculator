@@ -1,0 +1,17 @@
+{
+  "name": "기름값 계산기",
+  "short_name": "기름값",
+  "description": "주행거리, 차량 연비, 리터당 기름값으로 예상 주행 비용을 계산합니다.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7faf8",
+  "theme_color": "#0f3d36",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

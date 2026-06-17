@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="기름값 계산기 아이콘">
+  <rect width="96" height="96" rx="20" fill="#0f3d36" />
+  <path
+    d="M24 68c0-13.3 10.7-24 24-24h7.5C67.9 44 78 33.9 78 21.5"
+    fill="none"
+    stroke="#fffaf0"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path d="M25 70h48" fill="none" stroke="#f3a51f" stroke-width="6" stroke-linecap="round" />
+  <path
+    d="M31 24h22l9 15v31H22V33a9 9 0 0 1 9-9Z"
+    fill="none"
+    stroke="#fffaf0"
+    stroke-width="6"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M62 37h8a9 9 0 0 1 9 9v13.5a7.5 7.5 0 0 1-15 0V50"
+    fill="none"
+    stroke="#fffaf0"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
