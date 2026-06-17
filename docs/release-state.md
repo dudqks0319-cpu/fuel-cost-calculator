@@ -16,8 +16,8 @@ Updated: 2026-06-17
 
 ## External State
 
-- GitHub Pages privacy URL: pending publish after Pages build recovery
-- GitHub Pages support URL: pending publish after Pages build recovery
+- GitHub Pages privacy URL: pending publish through Actions Pages workflow
+- GitHub Pages support URL: pending publish through Actions Pages workflow
 - App Store Connect app record: pending account login
 - App Store Connect Apple ID / `ASC_APP_ID`: pending
 - EAS iOS build ID: pending
