@@ -5,7 +5,7 @@ Updated: 2026-06-17
 ## Local Code State
 
 - Branch: `appstore-free-release`
-- Latest release-prep commit: `a1e7ebe`
+- Latest release-prep commit: `0ab955f`
 - App name: 기름값 계산기
 - Version: `1.0.0`
 - iOS bundle ID: `com.jyb1126.fuelcostcalculator`
@@ -16,8 +16,8 @@ Updated: 2026-06-17
 
 ## External State
 
-- GitHub Pages privacy URL: pending publish
-- GitHub Pages support URL: pending publish
+- GitHub Pages privacy URL: pending publish after Pages build recovery
+- GitHub Pages support URL: pending publish after Pages build recovery
 - App Store Connect app record: pending account login
 - App Store Connect Apple ID / `ASC_APP_ID`: pending
 - EAS iOS build ID: pending
