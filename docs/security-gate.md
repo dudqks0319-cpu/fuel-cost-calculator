@@ -1,6 +1,6 @@
 # Security Gate
 
-Date: 2026-06-17
+Date: 2026-06-18
 Security Owner: Orchestrator
 
 ## Checklist
@@ -12,7 +12,7 @@ Security Owner: Orchestrator
 - Data Handling: only calculation inputs and UI choices are stored locally through AsyncStorage.
 - Abuse Controls: not applicable for a local-only calculator with no network API, sessions, payments, or user-generated public content.
 - Tests: calculator, formatter, chart, vehicle data, fuel price, EV mode, compare copy, and purchase feature tests exist.
-- Residual Risk: moderate/low transitive development-tool advisories may remain until Expo/React Native upstreams publish compatible fixes. App Store Connect account state, Apple agreements, real-device TestFlight behavior, and final App Review approval remain external gates owned by the account holder.
+- Residual Risk: EAS build/upload, TestFlight processing, real-device behavior, free pricing confirmation, Apple agreements, and final App Review approval remain external gates owned by the account holder.
 
 ## Release Command
 
@@ -25,6 +25,6 @@ For iOS submission readiness after the App Store Connect app record exists:
 ```bash
 STORE_PRIVACY_POLICY_URL=https://dudqks0319-cpu.github.io/fuel-cost-calculator/privacy.html \
 STORE_SUPPORT_URL=https://dudqks0319-cpu.github.io/fuel-cost-calculator/support.html \
-ASC_APP_ID=<app-store-connect-apple-id> \
+ASC_APP_ID=6781709284 \
 npm run release:ios
 ```

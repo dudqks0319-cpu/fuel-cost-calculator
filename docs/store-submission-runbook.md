@@ -16,8 +16,8 @@
 - 플랫폼: iOS
 - 이름: 기름값 계산기
 - 기본 언어: 한국어
-- 번들 ID: `com.jyb1126.fuelcostcalculator`
-- SKU: `fuel-cost-calculator-ios-20260617`
+- 번들 ID: `com.jyb1126.fccalc`
+- SKU: `fuel-cost-calculator-ios-20260618`
 - 가격: 무료
 - 개인정보 처리방침 URL: `https://dudqks0319-cpu.github.io/fuel-cost-calculator/privacy.html`
 - 지원 URL: `https://dudqks0319-cpu.github.io/fuel-cost-calculator/support.html`
@@ -29,7 +29,7 @@ App Store Connect 앱 레코드 생성 후 `ASC_APP_ID`를 설정한다.
 ```bash
 STORE_PRIVACY_POLICY_URL=https://dudqks0319-cpu.github.io/fuel-cost-calculator/privacy.html \
 STORE_SUPPORT_URL=https://dudqks0319-cpu.github.io/fuel-cost-calculator/support.html \
-ASC_APP_ID=<app-store-connect-apple-id> \
+ASC_APP_ID=6781709284 \
 npm run release:ios
 ```
 

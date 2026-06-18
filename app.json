@@ -13,7 +13,7 @@
       "backgroundColor": "#F2F2F7"
     },
     "ios": {
-      "bundleIdentifier": "com.jyb1126.fuelcostcalculator",
+      "bundleIdentifier": "com.jyb1126.fccalc",
       "buildNumber": "1",
       "supportsTablet": false,
       "infoPlist": {

@@ -71,7 +71,7 @@ function checkConfig() {
 
   assert(appConfig.name === "기름값 계산기", "Expo display name is store-ready");
   assert(appConfig.version === "1.0.0", "Expo version is set");
-  assert(appConfig.ios?.bundleIdentifier === "com.jyb1126.fuelcostcalculator", "iOS bundle identifier is production");
+  assert(appConfig.ios?.bundleIdentifier === "com.jyb1126.fccalc", "iOS bundle identifier is production");
   assert(appConfig.ios?.buildNumber === "1", "iOS buildNumber is set");
   assert(appConfig.ios?.infoPlist?.ITSAppUsesNonExemptEncryption === false, "iOS export compliance flag is set");
   assert(appConfig.android?.package === "com.jyb1126.fuelcostcalculator", "Android package identifier is production");
@@ -103,7 +103,7 @@ function checkExpoPublicConfig() {
 
   try {
     const config = JSON.parse(result.stdout);
-    assert(config.ios?.bundleIdentifier === "com.jyb1126.fuelcostcalculator", "Expo public config has production iOS ID");
+    assert(config.ios?.bundleIdentifier === "com.jyb1126.fccalc", "Expo public config has production iOS ID");
     assert(config.android?.package === "com.jyb1126.fuelcostcalculator", "Expo public config has production Android ID");
   } catch {
     recordFailure("expo public config JSON is parseable");

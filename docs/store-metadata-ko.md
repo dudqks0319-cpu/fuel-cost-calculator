@@ -7,8 +7,8 @@
 - 카테고리: 유틸리티
 - 가격: 무료
 - 플랫폼: iOS
-- 번들 ID: `com.jyb1126.fuelcostcalculator`
-- SKU 제안: `fuel-cost-calculator-ios-20260617`
+- 번들 ID: `com.jyb1126.fccalc`
+- SKU: `fuel-cost-calculator-ios-20260618`
 
 ## 설명
 
