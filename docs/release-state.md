@@ -5,7 +5,7 @@ Updated: 2026-06-18
 ## Local Code State
 
 - Branch: `appstore-free-release`
-- Latest release-prep commit: see `git log --oneline -3`
+- Latest release-prep commit: `c038af8` (`Align iOS release record with App Store Connect`)
 - App name: 기름값 계산기
 - Version: `1.0.0`
 - iOS bundle ID: `com.jyb1126.fccalc`
@@ -21,7 +21,7 @@ Updated: 2026-06-18
 - Apple Developer Bundle ID: `com.jyb1126.fccalc` registered on 2026-06-18
 - App Store Connect app record: created on 2026-06-18, status `iOS 1.0 제출 준비 중`
 - App Store Connect Apple ID / `ASC_APP_ID`: `6781709284`
-- EAS iOS build ID: pending
+- EAS iOS build ID: pending. Upload was approved by the account holder, but the EAS command was blocked by the Codex usage limit on 2026-06-18; retry after the reported window `2026-06-19 01:46`.
 - EAS submit ID: pending
 - TestFlight state: pending
 - Real-device result: pending
@@ -31,6 +31,7 @@ Updated: 2026-06-18
 ## Verification
 
 - `npm run release:local`: passed on 2026-06-17
+- `npm run release:ios` with `ASC_APP_ID=6781709284`: passed on 2026-06-18
 - `npm run lint`: passed with 2 pre-existing style warnings in `scripts/convert-vehicles.ts`
 - `npx expo export --platform web`: passed on 2026-06-17
 - Local static export HTTP check: `http://127.0.0.1:4173` returned 200 and exported HTML title is `기름값 계산기`
@@ -38,8 +39,8 @@ Updated: 2026-06-18
 
 ## Next Action
 
-1. Run `npm run release:ios` with `ASC_APP_ID=6781709284`.
-2. Build iOS with EAS production profile.
-3. Submit the EAS build to TestFlight.
+1. Retry `eas build -p ios --profile production` after the Codex usage-limit window.
+2. Capture the EAS iOS build ID and update this ledger.
+3. Submit the successful EAS build to TestFlight.
 4. Install from TestFlight on a real iPhone and record launch evidence.
 5. Complete App Store metadata, free pricing confirmation, and final App Review submission manually in App Store Connect.
