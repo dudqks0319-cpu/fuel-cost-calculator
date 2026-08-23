@@ -4,27 +4,30 @@ import { describe, expect, it } from "vitest";
 
 const source = fs.readFileSync(path.resolve(process.cwd(), "app/(tabs)/index.tsx"), "utf8");
 
-describe("home tab EV mode", () => {
-  it("supports a separate vehicle mode for fuel and electric vehicles", () => {
-    expect(source).toContain('type VehicleMode = "fuel" | "electric"');
-    expect(source).toContain("vehicleMode: VehicleMode");
-    expect(source).toContain('label: "내연기관", value: "fuel" as const');
-    expect(source).toContain('label: "전기차", value: "electric" as const');
+describe("home tab fuel calculator", () => {
+  it("renders the simple distance, efficiency, and fuel price flow", () => {
+    expect(source).toContain('label="운행 거리"');
+    expect(source).toContain('label="평균 연비"');
+    expect(source).toContain('label="유류 가격"');
+    expect(source).toContain("전국 주유소 평균 가격 조회하기");
+    expect(source).toContain("계산하기");
     expect(source).toContain("useFuelPrices()");
   });
 
-  it("includes EV manual input and charging state", () => {
-    expect(source).toContain('chargeMode: "fast"');
-    expect(source).toContain('manualChargePrice: ""');
-    expect(source).toContain('manualEfficiency: "5.0"');
-    expect(source).toContain('manualBatteryCapacity: "72.6"');
-    expect(source).toContain("CHARGE_PRESETS");
-    expect(source).toContain("완충 비용");
-    expect(source).toContain("월 충전비");
+  it("supports Opinet-style product codes through a proxy payload", () => {
+    expect(source).toContain('const FUEL_PRICE_API_URL = process.env.EXPO_PUBLIC_FUEL_PRICE_API_URL');
+    expect(source).toContain('readPrice(prices, ["premium", "B034"])');
+    expect(source).toContain('readPrice(prices, ["gasoline", "B027"])');
+    expect(source).toContain('readPrice(prices, ["diesel", "D047"])');
+    expect(source).toContain('readPrice(prices, ["lpg", "K015", "K105"])');
+    expect(source).toContain("setFuelPrices((current) => ({");
   });
 
-  it("shows electric pricing in the today price card", () => {
-    expect(source).toContain('label: "전기"');
-    expect(source).toContain('icon: "flash-outline"');
+  it("calculates trip fuel cost from manual values", () => {
+    expect(source).toContain("calcFuelNeeded(distanceKm, fuelEfficiency)");
+    expect(source).toContain("calcCostPerKm(fuelPrice, fuelEfficiency)");
+    expect(source).toContain("calcTripFuelCost(distanceKm, fuelPrice, fuelEfficiency)");
+    expect(source).toContain("예상 유류비");
+    expect(source).toContain("직접입력");
   });
 });

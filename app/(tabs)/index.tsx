@@ -1,82 +1,40 @@
-import { Ionicons } from "@expo/vector-icons";
-import Slider from "@react-native-community/slider";
-import { useEffect, useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
-import { ResultCard } from "@/components/ResultCard";
-import { VehicleSelector, type VehicleSelectionState } from "@/components/VehicleSelector";
-import { ActionTextButton, AppCard, AppScreen, InlineMessage, InputField, SegmentedControl } from "@/components/ui";
-import { vehiclesData } from "@/data/vehicles";
-import {
-  calcCostPerKm,
-  calcEvCostPerKm,
-  calcEvMonthlyCost,
-  calcEvRange,
-  calcFullTankCost,
-  calcFullTankRange,
-  calcMonthlyCost
-} from "@/utils/calculator";
-import {
-  CHARGE_PRESETS,
-  type ChargePresetKey,
-  DEFAULT_MONTHLY_KM,
-  FUEL_TYPE_LABELS,
-  MANUAL_FUEL_OPTIONS,
-  MILEAGE_TYPE_OPTIONS,
-  MONTHLY_KM_RANGE
-} from "@/utils/defaults";
-import { formatCurrency, formatKm, formatLiter, formatNumber } from "@/utils/formatter";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useMemo, useState } from "react";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { calcCostPerKm, calcFuelNeeded, calcTripFuelCost } from "@/utils/calculator";
+import { formatCurrency, formatNumber } from "@/utils/formatter";
 import { useFuelPrices } from "@/utils/FuelPriceContext";
-import { STORAGE_KEYS, loadStoredValue, saveStoredValue } from "@/utils/storage";
-import { getVehicleBySelection } from "@/utils/vehicles";
-import { type ElectricVehicleRecord, type FuelVehicleRecord, type MileageType } from "@/types/vehicle";
 import { theme } from "@/theme/tokens";
 
-type HomeMode = "vehicle" | "manual";
-type VehicleMode = "fuel" | "electric";
+type FuelChoice = "premium" | "diesel" | "gasoline" | "lpg" | "manual";
 
-type HomeFormState = {
-  inputMode: HomeMode;
-  vehicleMode: VehicleMode;
-  mileageType: MileageType;
-  selection: VehicleSelectionState;
-  manualMpg: string;
-  manualFuelType: FuelVehicleRecord["fuelType"];
-  manualTankCapacity: string;
-  monthlyKm: number;
-  showFormula: boolean;
-  chargeMode: ChargePresetKey;
-  manualChargePrice: string;
-  manualEfficiency: string;
-  manualBatteryCapacity: string;
+type RemoteFuelPricePayload = {
+  premium?: number;
+  gasoline?: number;
+  diesel?: number;
+  lpg?: number;
+  updatedAt?: string;
 };
 
-const defaultSelection: VehicleSelectionState = {
-  manufacturer: "",
-  model: "",
-  powertrain: ""
-};
+const FUEL_PRICE_API_URL = process.env.EXPO_PUBLIC_FUEL_PRICE_API_URL;
 
-const defaultHomeForm: HomeFormState = {
-  inputMode: "vehicle",
-  vehicleMode: "fuel",
-  mileageType: "combined",
-  selection: defaultSelection,
-  manualMpg: "10.0",
-  manualFuelType: "gasoline",
-  manualTankCapacity: "60",
-  monthlyKm: DEFAULT_MONTHLY_KM,
-  showFormula: false,
-  chargeMode: "fast",
-  manualChargePrice: "",
-  manualEfficiency: "5.0",
-  manualBatteryCapacity: "72.6"
-};
+const fuelOptions: {
+  key: FuelChoice;
+  label: string;
+  priceKey?: keyof Omit<RemoteFuelPricePayload, "updatedAt">;
+}[] = [
+  { key: "premium", label: "고급 휘발유", priceKey: "premium" },
+  { key: "diesel", label: "경유", priceKey: "diesel" },
+  { key: "gasoline", label: "휘발유", priceKey: "gasoline" },
+  { key: "lpg", label: "LPG", priceKey: "lpg" },
+  { key: "manual", label: "직접입력" }
+];
 
-const fuelVehicles = vehiclesData.vehicles.filter((vehicle) => vehicle.fuelType !== "electric") as FuelVehicleRecord[];
-const electricVehicles = vehiclesData.vehicles.filter((vehicle) => vehicle.fuelType === "electric") as ElectricVehicleRecord[];
-
-function sanitizeNumber(text: string, allowDecimal = false) {
-  return text.replace(allowDecimal ? /[^0-9.]/g : /[^0-9]/g, "");
+function sanitizeDecimal(text: string) {
+  const next = text.replace(/[^0-9.]/g, "");
+  const [first, ...rest] = next.split(".");
+  return rest.length > 0 ? `${first}.${rest.join("")}` : first;
 }
 
 function parseNumeric(value: string) {
@@ -84,455 +42,564 @@ function parseNumeric(value: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function priceMeta(fuelPrices: ReturnType<typeof useFuelPrices>["fuelPrices"]) {
-  return [
-    { key: "gasoline", icon: "flame-outline" as const, label: "휘발유", price: fuelPrices.gasoline },
-    { key: "diesel", icon: "speedometer-outline" as const, label: "경유", price: fuelPrices.diesel },
-    { key: "lpg", icon: "leaf-outline" as const, label: "LPG", price: fuelPrices.lpg },
-    { key: "electric", icon: "flash-outline" as const, label: "전기", price: fuelPrices.electric }
-  ];
+function getRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+function readPrice(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return Math.round(value);
+    }
+    if (typeof value === "string") {
+      const parsed = Number.parseFloat(value.replace(/,/g, ""));
+      if (Number.isFinite(parsed)) {
+        return Math.round(parsed);
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function normalizeFuelPricePayload(payload: unknown): RemoteFuelPricePayload {
+  const root = getRecord(payload);
+  if (!root) {
+    return {};
+  }
+
+  const prices = getRecord(root.prices) ?? root;
+  const updatedAt = typeof root.updatedAt === "string" ? root.updatedAt : undefined;
+
+  return {
+    premium: readPrice(prices, ["premium", "B034"]),
+    gasoline: readPrice(prices, ["gasoline", "B027"]),
+    diesel: readPrice(prices, ["diesel", "D047"]),
+    lpg: readPrice(prices, ["lpg", "K015", "K105"]),
+    updatedAt
+  };
+}
+
+async function fetchRemoteFuelPrices() {
+  if (!FUEL_PRICE_API_URL) {
+    throw new Error("오피넷 프록시 URL이 아직 설정되지 않았습니다.");
+  }
+
+  const response = await fetch(FUEL_PRICE_API_URL);
+  if (!response.ok) {
+    throw new Error(`유가 조회 실패: ${response.status}`);
+  }
+
+  return normalizeFuelPricePayload(await response.json());
+}
+
+function UnderlineInput({
+  accessibilityLabel,
+  onChangeText,
+  placeholder = "입력",
+  suffix,
+  value,
+  width
+}: {
+  accessibilityLabel: string;
+  onChangeText: (text: string) => void;
+  placeholder?: string;
+  suffix: string;
+  value: string;
+  width: number;
+}) {
+  return (
+    <View style={[styles.underlineInput, { width }]}>
+      <TextInput
+        accessibilityLabel={accessibilityLabel}
+        keyboardType="decimal-pad"
+        onChangeText={(text) => onChangeText(sanitizeDecimal(text))}
+        placeholder={placeholder}
+        placeholderTextColor="#9B9B9B"
+        style={styles.underlineTextInput}
+        value={value}
+      />
+      <Text style={styles.inputSuffix}>{suffix}</Text>
+    </View>
+  );
+}
+
+function SectionTitle({
+  icon,
+  label
+}: {
+  icon?: keyof typeof MaterialIcons.glyphMap;
+  label: string;
+}) {
+  return (
+    <View style={styles.sectionTitle}>
+      {icon ? <MaterialIcons color="#222222" name={icon} size={23} /> : <Text style={styles.wonIcon}>₩</Text>}
+      <Text style={styles.sectionTitleText}>{label}</Text>
+    </View>
+  );
+}
+
+function RadioMark({ checked, disabled }: { checked: boolean; disabled?: boolean }) {
+  return (
+    <View
+      style={[
+        styles.radioOuter,
+        checked ? styles.radioOuterChecked : null,
+        disabled ? styles.radioOuterDisabled : null
+      ]}
+    >
+      {checked ? <View style={styles.radioInner} /> : null}
+    </View>
+  );
+}
+
+function FuelOptionRow({
+  checked,
+  disabled,
+  label,
+  onPress,
+  price
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  label: string;
+  onPress: () => void;
+  price?: number;
+}) {
+  const color = disabled ? styles.disabledText : styles.optionText;
+  const priceText = price ? formatNumber(price) : "---";
+
+  return (
+    <Pressable disabled={disabled} onPress={onPress} style={styles.optionRow}>
+      <View style={styles.optionLabel}>
+        <RadioMark checked={checked} disabled={disabled} />
+        <Text style={[styles.optionLabelText, color]}>{label}</Text>
+      </View>
+      <Text style={[styles.optionPriceText, color]}>
+        (약 <Text style={styles.optionPriceStrong}>{priceText}</Text>원/L)
+      </Text>
+    </Pressable>
+  );
 }
 
 export default function HomeScreen() {
   const { fuelPrices, setFuelPrices } = useFuelPrices();
-  const [homeForm, setHomeForm] = useState<HomeFormState>(defaultHomeForm);
-  const [isEditingPrices, setIsEditingPrices] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [distance, setDistance] = useState("");
+  const [efficiency, setEfficiency] = useState("");
+  const [manualPrice, setManualPrice] = useState("");
+  const [selectedFuel, setSelectedFuel] = useState<FuelChoice>("manual");
+  const [premiumPrice, setPremiumPrice] = useState<number | undefined>();
+  const [resultVisible, setResultVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [statusText, setStatusText] = useState("");
 
-  useEffect(() => {
-    let mounted = true;
+  const displayPrices = useMemo(
+    () => ({
+      premium: premiumPrice,
+      gasoline: fuelPrices.gasoline,
+      diesel: fuelPrices.diesel,
+      lpg: fuelPrices.lpg
+    }),
+    [fuelPrices.diesel, fuelPrices.gasoline, fuelPrices.lpg, premiumPrice]
+  );
 
-    void (async () => {
-      const storedHomeForm = await loadStoredValue(STORAGE_KEYS.homeForm, defaultHomeForm);
-      if (!mounted) {
-        return;
-      }
-      setHomeForm(storedHomeForm);
-      setLoaded(true);
-    })();
+  const fuelPrice = selectedFuel === "manual" ? parseNumeric(manualPrice) : displayPrices[selectedFuel] ?? 0;
+  const distanceKm = parseNumeric(distance);
+  const fuelEfficiency = parseNumeric(efficiency);
+  const canCalculate = distanceKm > 0 && fuelEfficiency > 0 && fuelPrice > 0;
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!loaded) {
-      return;
+  const result = useMemo(() => {
+    if (!canCalculate) {
+      return null;
     }
 
-    void saveStoredValue(STORAGE_KEYS.homeForm, homeForm);
-  }, [homeForm, loaded]);
-
-  const selectedFuelVehicle = getVehicleBySelection(
-    fuelVehicles,
-    homeForm.selection.manufacturer,
-    homeForm.selection.model,
-    homeForm.selection.powertrain
-  ) as FuelVehicleRecord | undefined;
-  const selectedElectricVehicle = getVehicleBySelection(
-    electricVehicles,
-    homeForm.selection.manufacturer,
-    homeForm.selection.model,
-    homeForm.selection.powertrain
-  ) as ElectricVehicleRecord | undefined;
-  const isElectricMode = homeForm.vehicleMode === "electric";
-  const chargePreset = CHARGE_PRESETS.find((preset) => preset.key === homeForm.chargeMode);
-  const chargePrice =
-    homeForm.chargeMode === "manual"
-      ? parseNumeric(homeForm.manualChargePrice) || fuelPrices.electric
-      : chargePreset?.price ?? fuelPrices.electric;
-
-  const fuelEfficiency =
-    homeForm.inputMode === "vehicle"
-      ? selectedFuelVehicle?.mpg[homeForm.mileageType] ?? 0
-      : parseNumeric(homeForm.manualMpg);
-  const fuelTankCapacity =
-    homeForm.inputMode === "vehicle"
-      ? selectedFuelVehicle?.tankCapacity ?? 0
-      : parseNumeric(homeForm.manualTankCapacity);
-  const fuelType =
-    homeForm.inputMode === "vehicle"
-      ? selectedFuelVehicle?.fuelType ?? "gasoline"
-      : homeForm.manualFuelType;
-
-  const electricEfficiency =
-    homeForm.inputMode === "vehicle"
-      ? selectedElectricVehicle?.efficiency ?? 0
-      : parseNumeric(homeForm.manualEfficiency);
-  const batteryCapacity =
-    homeForm.inputMode === "vehicle"
-      ? selectedElectricVehicle?.batteryCapacity ?? 0
-      : parseNumeric(homeForm.manualBatteryCapacity);
-
-  const resultCards = useMemo(() => {
-    if (isElectricMode) {
-      return {
-        fullCost: calcFullTankCost(batteryCapacity, chargePrice),
-        fullRange: calcEvRange(batteryCapacity, electricEfficiency),
-        costPerKm: calcEvCostPerKm(chargePrice, electricEfficiency),
-        monthlyCost: calcEvMonthlyCost(homeForm.monthlyKm, chargePrice, electricEfficiency)
-      };
-    }
-
-    const fuelPrice = fuelPrices[fuelType];
     return {
-      fullCost: calcFullTankCost(fuelTankCapacity, fuelPrice),
-      fullRange: calcFullTankRange(fuelTankCapacity, fuelEfficiency),
+      fuelNeeded: calcFuelNeeded(distanceKm, fuelEfficiency),
       costPerKm: calcCostPerKm(fuelPrice, fuelEfficiency),
-      monthlyCost: calcMonthlyCost(homeForm.monthlyKm, fuelPrice, fuelEfficiency)
+      totalCost: calcTripFuelCost(distanceKm, fuelPrice, fuelEfficiency)
     };
-  }, [
-    batteryCapacity,
-    chargePrice,
-    electricEfficiency,
-    fuelEfficiency,
-    fuelPrices,
-    fuelTankCapacity,
-    fuelType,
-    homeForm.monthlyKm,
-    isElectricMode
-  ]);
+  }, [canCalculate, distanceKm, fuelEfficiency, fuelPrice]);
 
-  const ready = isElectricMode
-    ? electricEfficiency > 0 && batteryCapacity > 0
-    : fuelEfficiency > 0 && fuelTankCapacity > 0;
+  async function handleRefreshPrices() {
+    setRefreshing(true);
+    setStatusText("전국 평균 유가를 조회하는 중입니다.");
+
+    try {
+      const next = await fetchRemoteFuelPrices();
+      const hasFuelPrice = Boolean(next.gasoline || next.diesel || next.lpg || next.premium);
+
+      if (!hasFuelPrice) {
+        throw new Error("응답에 유가 정보가 없습니다.");
+      }
+
+      setFuelPrices((current) => ({
+        ...current,
+        gasoline: next.gasoline ?? current.gasoline,
+        diesel: next.diesel ?? current.diesel,
+        lpg: next.lpg ?? current.lpg
+      }));
+      setPremiumPrice(next.premium);
+      setStatusText(next.updatedAt ? `오피넷 평균가 반영: ${next.updatedAt}` : "오피넷 평균가를 반영했습니다.");
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : "유가 조회에 실패했습니다.");
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  function handleCalculate() {
+    if (canCalculate) {
+      setResultVisible(true);
+    }
+  }
 
   return (
-    <AppScreen title="연료비 계산기">
-      <AppCard
-        action={
-          <ActionTextButton
-            label={isEditingPrices ? "수정완료" : "직접수정"}
-            onPress={() => setIsEditingPrices((current) => !current)}
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <View style={styles.calculator}>
+          <SectionTitle icon="directions-car" label="운행 거리" />
+          <UnderlineInput
+            accessibilityLabel="운행 거리"
+            onChangeText={(text) => {
+              setDistance(text);
+              setResultVisible(false);
+            }}
+            suffix="km"
+            value={distance}
+            width={92}
           />
-        }
-        title="오늘의 유가"
-      >
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.spacing.sm }}>
-          {priceMeta(fuelPrices).map((item) => (
-            <View
-              key={item.key}
-              style={{
-                flex: 1,
-                minWidth: "47%",
-                borderRadius: theme.radius.sm,
-                backgroundColor: theme.colors.input,
-                padding: theme.spacing.md,
-                alignItems: "center",
-                gap: 6
-              }}
-            >
-              <Ionicons color={item.key === "electric" ? theme.colors.purple : theme.colors.primary} name={item.icon} size={20} />
-              <Text style={[theme.typography.caption, { fontWeight: "600" }]}>{item.label}</Text>
-              <Text style={[theme.typography.body, { fontWeight: "700", color: theme.colors.text }]}>
-                {formatNumber(item.price)}원
-              </Text>
-            </View>
-          ))}
-        </View>
 
-        {isEditingPrices ? (
-          <View style={{ gap: theme.spacing.sm }}>
-            <InputField
-              keyboardType="number-pad"
-              label="휘발유 가격"
-              onChangeText={(text) =>
-                setFuelPrices((current) => ({
-                  ...current,
-                  gasoline: Number.parseInt(sanitizeNumber(text), 10) || 0
-                }))
-              }
-              suffix="원"
-              value={String(fuelPrices.gasoline)}
-            />
-            <InputField
-              keyboardType="number-pad"
-              label="경유 가격"
-              onChangeText={(text) =>
-                setFuelPrices((current) => ({
-                  ...current,
-                  diesel: Number.parseInt(sanitizeNumber(text), 10) || 0
-                }))
-              }
-              suffix="원"
-              value={String(fuelPrices.diesel)}
-            />
-            <InputField
-              keyboardType="number-pad"
-              label="LPG 가격"
-              onChangeText={(text) =>
-                setFuelPrices((current) => ({
-                  ...current,
-                  lpg: Number.parseInt(sanitizeNumber(text), 10) || 0
-                }))
-              }
-              suffix="원"
-              value={String(fuelPrices.lpg)}
-            />
-            <InputField
-              keyboardType="number-pad"
-              label="전기 충전요금"
-              onChangeText={(text) =>
-                setFuelPrices((current) => ({
-                  ...current,
-                  electric: Number.parseInt(sanitizeNumber(text), 10) || 0
-                }))
-              }
-              suffix="원/kWh"
-              value={String(fuelPrices.electric)}
-            />
-          </View>
-        ) : null}
-      </AppCard>
-
-      <AppCard title="내 차 정보">
-        <SegmentedControl
-          onChange={(value) => setHomeForm((current) => ({ ...current, vehicleMode: value, selection: defaultSelection }))}
-          options={[
-            { label: "내연기관", value: "fuel" as const },
-            { label: "전기차", value: "electric" as const }
-          ]}
-          value={homeForm.vehicleMode}
-        />
-        <SegmentedControl
-          onChange={(value) => setHomeForm((current) => ({ ...current, inputMode: value }))}
-          options={[
-            { label: "차량 선택", value: "vehicle" as const },
-            { label: "직접 입력", value: "manual" as const }
-          ]}
-          value={homeForm.inputMode}
-        />
-
-        {homeForm.inputMode === "vehicle" ? (
-          <VehicleSelector
-            mileageType={homeForm.mileageType}
-            mode={homeForm.vehicleMode}
-            onSelectionChange={(selection) => setHomeForm((current) => ({ ...current, selection }))}
-            selection={homeForm.selection}
-            vehicles={isElectricMode ? electricVehicles : fuelVehicles}
+          <SectionTitle icon="local-gas-station" label="평균 연비" />
+          <UnderlineInput
+            accessibilityLabel="평균 연비"
+            onChangeText={(text) => {
+              setEfficiency(text);
+              setResultVisible(false);
+            }}
+            suffix="km/L"
+            value={efficiency}
+            width={104}
           />
-        ) : (
-          <View style={{ gap: theme.spacing.sm }}>
-            {isElectricMode ? (
-              <>
-                <InputField
-                  helperText="예: 5.0"
-                  keyboardType="decimal-pad"
-                  label="전비"
-                  onChangeText={(text) =>
-                    setHomeForm((current) => ({ ...current, manualEfficiency: sanitizeNumber(text, true) }))
-                  }
-                  suffix="km/kWh"
-                  value={homeForm.manualEfficiency}
-                />
-                <InputField
-                  helperText="예: 72.6"
-                  keyboardType="decimal-pad"
-                  label="배터리용량"
-                  onChangeText={(text) =>
-                    setHomeForm((current) => ({ ...current, manualBatteryCapacity: sanitizeNumber(text, true) }))
-                  }
-                  suffix="kWh"
-                  value={homeForm.manualBatteryCapacity}
-                />
-              </>
-            ) : (
-              <>
-                <InputField
-                  helperText="예: 10.0"
-                  keyboardType="decimal-pad"
-                  label="연비"
-                  onChangeText={(text) => setHomeForm((current) => ({ ...current, manualMpg: sanitizeNumber(text, true) }))}
-                  suffix="km/L"
-                  value={homeForm.manualMpg}
-                />
-                <SegmentedControl
-                  onChange={(value) => setHomeForm((current) => ({ ...current, manualFuelType: value }))}
-                  options={MANUAL_FUEL_OPTIONS}
-                  value={homeForm.manualFuelType}
-                />
-                <InputField
-                  keyboardType="decimal-pad"
-                  label="탱크용량"
-                  onChangeText={(text) =>
-                    setHomeForm((current) => ({ ...current, manualTankCapacity: sanitizeNumber(text, true) }))
-                  }
-                  suffix="L"
-                  value={homeForm.manualTankCapacity}
-                />
-              </>
-            )}
-          </View>
-        )}
 
-        {!isElectricMode ? (
-          <SegmentedControl
-            onChange={(value) => setHomeForm((current) => ({ ...current, mileageType: value }))}
-            options={MILEAGE_TYPE_OPTIONS}
-            value={homeForm.mileageType}
-          />
-        ) : (
-          <View style={{ gap: theme.spacing.sm }}>
-            <SegmentedControl
-              onChange={(value) => setHomeForm((current) => ({ ...current, chargeMode: value }))}
-              options={CHARGE_PRESETS.map((preset) => ({ label: preset.label, value: preset.key }))}
-              value={homeForm.chargeMode}
-            />
-            {homeForm.chargeMode === "manual" ? (
-              <InputField
-                keyboardType="number-pad"
-                label="직접 충전요금"
-                onChangeText={(text) =>
-                  setHomeForm((current) => ({ ...current, manualChargePrice: sanitizeNumber(text) }))
-                }
-                suffix="원/kWh"
-                value={homeForm.manualChargePrice}
-              />
-            ) : null}
-          </View>
-        )}
-
-        {isElectricMode && selectedElectricVehicle ? (
-          <View style={{ gap: 4 }}>
-            <Text style={theme.typography.caption}>
-              {selectedElectricVehicle.model} {selectedElectricVehicle.powertrain}
+          <SectionTitle label="유류 가격" />
+          <Pressable disabled={refreshing} onPress={handleRefreshPrices} style={styles.lookupButton}>
+            <MaterialIcons color={theme.colors.primary} name="cached" size={19} />
+            <Text style={styles.lookupButtonText}>
+              {refreshing ? "조회 중..." : "전국 주유소 평균 가격 조회하기"}
             </Text>
-            <Text style={theme.typography.caption}>전비 {selectedElectricVehicle.efficiency.toFixed(1)} km/kWh</Text>
-            <Text style={theme.typography.caption}>
-              배터리용량 {selectedElectricVehicle.batteryCapacity > 0 ? `${selectedElectricVehicle.batteryCapacity} kWh` : "미입력"}
-            </Text>
+          </Pressable>
+          {statusText ? <Text style={styles.statusText}>{statusText}</Text> : null}
+
+          <View style={styles.options}>
+            {fuelOptions.map((option) => {
+              if (option.key === "manual") {
+                return (
+                  <View key={option.key} style={styles.manualRow}>
+                    <Pressable onPress={() => setSelectedFuel("manual")} style={styles.optionLabel}>
+                      <RadioMark checked={selectedFuel === "manual"} />
+                      <Text style={styles.manualLabelText}>직접입력</Text>
+                    </Pressable>
+                    <UnderlineInput
+                      accessibilityLabel="직접 유류 가격"
+                      onChangeText={(text) => {
+                        setManualPrice(text);
+                        setSelectedFuel("manual");
+                        setResultVisible(false);
+                      }}
+                      suffix="원/L"
+                      value={manualPrice}
+                      width={112}
+                    />
+                  </View>
+                );
+              }
+
+              const price = option.priceKey ? displayPrices[option.priceKey] : undefined;
+              const disabled = !price;
+
+              return (
+                <View key={option.key}>
+                  <FuelOptionRow
+                    checked={selectedFuel === option.key}
+                    disabled={disabled}
+                    label={option.label}
+                    onPress={() => {
+                      setSelectedFuel(option.key);
+                      setResultVisible(false);
+                    }}
+                    price={price}
+                  />
+                  <View style={styles.divider} />
+                </View>
+              );
+            })}
           </View>
-        ) : !isElectricMode && selectedFuelVehicle ? (
-          <View style={{ gap: 4 }}>
-            <Text style={theme.typography.caption}>
-              {selectedFuelVehicle.model} {selectedFuelVehicle.powertrain}
+
+          <Pressable
+            disabled={!canCalculate}
+            onPress={handleCalculate}
+            style={[styles.calculateButton, !canCalculate ? styles.calculateButtonDisabled : null]}
+          >
+            <Text style={[styles.calculateButtonText, !canCalculate ? styles.calculateButtonTextDisabled : null]}>
+              계산하기
             </Text>
-            <Text style={theme.typography.caption}>연료 {FUEL_TYPE_LABELS[selectedFuelVehicle.fuelType]}</Text>
-            <Text style={theme.typography.caption}>연비 {selectedFuelVehicle.mpg[homeForm.mileageType].toFixed(1)} km/L</Text>
-            <Text style={theme.typography.caption}>탱크용량 {formatLiter(selectedFuelVehicle.tankCapacity)}</Text>
-          </View>
-        ) : (
-          <InlineMessage
-            backgroundColor={`${isElectricMode ? theme.colors.purple : theme.colors.primary}10`}
-            color={isElectricMode ? theme.colors.purple : theme.colors.primary}
-            text="차량을 선택하거나 직접 입력값을 채워주세요."
-          />
-        )}
-      </AppCard>
+          </Pressable>
 
-      <AppCard title="계산 결과">
-        {ready ? (
-          <>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.spacing.sm }}>
-              <ResultCard
-                accentColor={isElectricMode ? theme.colors.purple : theme.colors.primary}
-                subtitle={
-                  isElectricMode
-                    ? `${batteryCapacity.toFixed(1)}kWh × ${formatNumber(chargePrice)}원`
-                    : `${formatLiter(fuelTankCapacity)} × ${formatNumber(fuelPrices[fuelType])}원`
-                }
-                title={isElectricMode ? "완충 비용" : "만땅 비용"}
-                value={formatCurrency(resultCards.fullCost)}
-              />
-              <ResultCard
-                accentColor={isElectricMode ? theme.colors.purple : theme.colors.success}
-                subtitle={
-                  isElectricMode
-                    ? `${batteryCapacity.toFixed(1)}kWh × ${electricEfficiency.toFixed(1)}km/kWh`
-                    : `${formatLiter(fuelTankCapacity)} × ${fuelEfficiency.toFixed(1)}km/L`
-                }
-                title={isElectricMode ? "완충 주행거리" : "만땅 주행거리"}
-                value={formatKm(resultCards.fullRange)}
-              />
-              <ResultCard
-                accentColor={isElectricMode ? theme.colors.purple : theme.colors.danger}
-                subtitle={
-                  isElectricMode
-                    ? `${formatNumber(chargePrice)}원 ÷ ${electricEfficiency.toFixed(1)}km/kWh`
-                    : `${formatNumber(fuelPrices[fuelType])}원 ÷ ${fuelEfficiency.toFixed(1)}km/L`
-                }
-                title="1km당 비용"
-                value={formatCurrency(resultCards.costPerKm)}
-              />
-              <ResultCard
-                accentColor={isElectricMode ? theme.colors.purple : theme.colors.primary}
-                subtitle={`${formatNumber(homeForm.monthlyKm)}km 기준`}
-                title={isElectricMode ? "월 충전비" : "월 유류비"}
-                value={formatCurrency(resultCards.monthlyCost)}
-              />
-            </View>
-
-            <View style={{ gap: theme.spacing.xs }}>
-              <Text style={[theme.typography.caption, { fontWeight: "600" }]}>
-                월 주행거리 {formatNumber(homeForm.monthlyKm)} km
-              </Text>
-              <Slider
-                maximumTrackTintColor={theme.colors.border}
-                maximumValue={MONTHLY_KM_RANGE.max}
-                minimumTrackTintColor={isElectricMode ? theme.colors.purple : theme.colors.primary}
-                minimumValue={MONTHLY_KM_RANGE.min}
-                onValueChange={(value) =>
-                  setHomeForm((current) => ({
-                    ...current,
-                    monthlyKm: Math.round(value / MONTHLY_KM_RANGE.step) * MONTHLY_KM_RANGE.step
-                  }))
-                }
-                step={MONTHLY_KM_RANGE.step}
-                thumbTintColor={isElectricMode ? theme.colors.purple : theme.colors.primary}
-                value={homeForm.monthlyKm}
-              />
-            </View>
-
-            <Pressable
-              onPress={() => setHomeForm((current) => ({ ...current, showFormula: !current.showFormula }))}
-              style={{ paddingVertical: theme.spacing.xs }}
-            >
-              <Text
-                style={[
-                  theme.typography.caption,
-                  { color: isElectricMode ? theme.colors.purple : theme.colors.primary, fontWeight: "600" }
-                ]}
-              >
-                {homeForm.showFormula ? "계산 과정 닫기" : "계산 과정 보기"}
-              </Text>
-            </Pressable>
-
-            {homeForm.showFormula ? (
-              <View
-                style={{
-                  borderRadius: theme.radius.sm,
-                  backgroundColor: theme.colors.input,
-                  padding: theme.spacing.md,
-                  gap: 6
-                }}
-              >
-                {isElectricMode ? (
-                  <>
-                    <Text style={theme.typography.caption}>완충 비용 = 배터리용량 × 충전요금</Text>
-                    <Text style={theme.typography.caption}>완충 주행거리 = 배터리용량 × 전비</Text>
-                    <Text style={theme.typography.caption}>1km당 비용 = 충전요금 ÷ 전비</Text>
-                    <Text style={theme.typography.caption}>월 충전비 = 월 주행거리 ÷ 전비 × 충전요금</Text>
-                  </>
-                ) : (
-                  <>
-                    <Text style={theme.typography.caption}>만땅 비용 = 탱크용량 × 연료 단가</Text>
-                    <Text style={theme.typography.caption}>만땅 주행거리 = 탱크용량 × 연비</Text>
-                    <Text style={theme.typography.caption}>1km당 비용 = 연료 단가 ÷ 연비</Text>
-                    <Text style={theme.typography.caption}>월 유류비 = 월 주행거리 ÷ 연비 × 연료 단가</Text>
-                  </>
-                )}
+          {resultVisible && result ? (
+            <View style={styles.resultBox}>
+              <Text style={styles.resultLabel}>예상 유류비</Text>
+              <Text style={styles.resultAmount}>{formatCurrency(result.totalCost)}</Text>
+              <View style={styles.resultMeta}>
+                <Text style={styles.resultMetaText}>필요 연료 {formatNumber(result.fuelNeeded)} L</Text>
+                <Text style={styles.resultMetaText}>1km당 {formatCurrency(result.costPerKm)}</Text>
               </View>
-            ) : null}
-          </>
-        ) : (
-          <InlineMessage
-            backgroundColor={`${isElectricMode ? theme.colors.purple : theme.colors.primary}10`}
-            color={isElectricMode ? theme.colors.purple : theme.colors.primary}
-            text="차량을 선택하거나 직접 입력값을 채워주세요."
-          />
-        )}
-      </AppCard>
-    </AppScreen>
+            </View>
+          ) : null}
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>오피넷 프록시 연결 시 최신 평균가를 자동 반영합니다.</Text>
+            <Pressable onPress={() => void Linking.openURL("https://www.opinet.co.kr/user/custapi/custApiInfo.do")}>
+              <Text style={styles.footerLink}>오피넷 API 안내 보기</Text>
+            </Pressable>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF"
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 22,
+    paddingVertical: 42
+  },
+  calculator: {
+    width: "100%",
+    maxWidth: 330,
+    alignItems: "center"
+  },
+  sectionTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    marginTop: 10,
+    marginBottom: 8
+  },
+  sectionTitleText: {
+    color: "#222222",
+    fontSize: 24,
+    fontWeight: "800",
+    lineHeight: 31
+  },
+  wonIcon: {
+    color: "#222222",
+    fontSize: 26,
+    fontWeight: "900",
+    lineHeight: 31
+  },
+  underlineInput: {
+    minHeight: 34,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#8C8C8C",
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8
+  },
+  underlineTextInput: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    color: "#222222",
+    fontSize: 16,
+    fontWeight: "700",
+    lineHeight: 21,
+    textAlign: "right"
+  },
+  inputSuffix: {
+    marginLeft: 7,
+    color: "#6F6F6F",
+    fontSize: 16,
+    fontWeight: "700"
+  },
+  lookupButton: {
+    minHeight: 38,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    borderRadius: 4,
+    paddingHorizontal: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    marginTop: 4,
+    marginBottom: 7
+  },
+  lookupButtonText: {
+    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: "700"
+  },
+  statusText: {
+    maxWidth: 282,
+    minHeight: 18,
+    color: "#8A8A8A",
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: "center",
+    marginBottom: 2
+  },
+  options: {
+    width: "100%",
+    maxWidth: 226,
+    marginTop: 2
+  },
+  optionRow: {
+    minHeight: 38,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  optionLabel: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  optionLabelText: {
+    fontSize: 16,
+    fontWeight: "700",
+    lineHeight: 22
+  },
+  optionText: {
+    color: "#707070"
+  },
+  disabledText: {
+    color: "#B2B2B2"
+  },
+  optionPriceText: {
+    fontSize: 15,
+    fontWeight: "700",
+    lineHeight: 22
+  },
+  optionPriceStrong: {
+    fontWeight: "900"
+  },
+  radioOuter: {
+    width: 21,
+    height: 21,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: "#B8B8B8",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10
+  },
+  radioOuterChecked: {
+    borderColor: theme.colors.primary
+  },
+  radioOuterDisabled: {
+    borderColor: "#C6C6C6"
+  },
+  radioInner: {
+    width: 9,
+    height: 9,
+    borderRadius: 999,
+    backgroundColor: theme.colors.primary
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "#D8D8D8"
+  },
+  manualRow: {
+    minHeight: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  manualLabelText: {
+    color: "#222222",
+    fontSize: 16,
+    fontWeight: "800"
+  },
+  calculateButton: {
+    width: "100%",
+    maxWidth: 320,
+    minHeight: 43,
+    borderRadius: 4,
+    backgroundColor: theme.colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 15
+  },
+  calculateButtonDisabled: {
+    backgroundColor: "#DDDDDD"
+  },
+  calculateButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800"
+  },
+  calculateButtonTextDisabled: {
+    color: "#A7A7A7"
+  },
+  resultBox: {
+    width: "100%",
+    maxWidth: 320,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 14
+  },
+  resultLabel: {
+    color: "#555555",
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 4
+  },
+  resultAmount: {
+    color: "#222222",
+    fontSize: 28,
+    fontWeight: "900",
+    lineHeight: 34
+  },
+  resultMeta: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 9
+  },
+  resultMetaText: {
+    color: "#777777",
+    fontSize: 12,
+    fontWeight: "700"
+  },
+  footer: {
+    width: "100%",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 22
+  },
+  footerText: {
+    color: "#8A8A8A",
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 19,
+    textAlign: "center"
+  },
+  footerLink: {
+    color: theme.colors.primary,
+    fontSize: 13,
+    fontWeight: "800"
+  }
+});

@@ -36,6 +36,9 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "연비계산기",
+          tabBarStyle: {
+            display: "none"
+          },
           tabBarIcon: renderTabIcon("calculator-outline", "calculator")
         }}
       />
